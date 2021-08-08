@@ -65,64 +65,25 @@ export class CalculatorComponent {
     let currentSum = 0;
     var calculatorExpressionLength = this.calculatorExpression.length;
     if (calculatorExpressionLength >= 3) {
-      
+      debugger;
       var calculatorExpressionCopy = this.calculatorExpression;
-
-      let currentIndex = 0;
-      let currentResult = 0;
-      let counter = 0;
       
-      let previousOperation = "";
-      while(counter < 5){
-        //Find index of symbol
-        debugger;
+      var result = this.calculateAndReplaceMultiplication(calculatorExpressionCopy);
+      calculatorExpressionCopy = result.expression;
+      currentSum = (result.currentSum != 0) ? result.currentSum : currentSum;
+      
+      result = this.calculateAndReplaceDivision(calculatorExpressionCopy);
+      calculatorExpressionCopy = result.expression;
+      currentSum = (result.currentSum != 0) ? result.currentSum : currentSum;
 
-        counter++;
+      result = this.calculateAndReplaceAddition(calculatorExpressionCopy);
+      calculatorExpressionCopy = result.expression;
+      currentSum = (result.currentSum != 0) ? result.currentSum : currentSum;
 
-        var index = this.findOperationIndex(calculatorExpressionCopy);
-        var number;
-        if(index == -1){
-          number = calculatorExpressionCopy.substring(0, calculatorExpressionCopy.length);
+      result = this.calculateAndReplaceSubtraction(calculatorExpressionCopy);
+      calculatorExpressionCopy = result.expression;
+      currentSum = (result.currentSum != 0) ? result.currentSum : currentSum;
 
-          counter = 5;
-        } else {
-          number = calculatorExpressionCopy.substring(0, index);
-        }
-        var operation = calculatorExpressionCopy.substring(index, index + 1);
-
-        if(counter == 1){
-          currentSum = Number(number);
-          previousOperation = operation;
-        } else {
-          //currentSum += Number(number);
-          currentSum = this.performOperation(currentSum.toString(), number, previousOperation);
-          previousOperation = operation;
-        }
-
-        console.log(previousOperation);
-        console.log(currentSum);
-
-        calculatorExpressionCopy = calculatorExpressionCopy.substring(index + 1, calculatorExpressionCopy.length);
-
-        
-        /*
-        var partOfExpression = this.findPartOfExpression(calculatorExpressionCopy);
-        var partOfExpressionLength = partOfExpression[0].length;
-        
-        var operationIndex = this.findOperationIndex(partOfExpression[0].toString());
-        var operation = calculatorExpressionCopy.substring(operationIndex, operationIndex + 1);
-
-        var firstArgument = calculatorExpressionCopy.substring(0, operationIndex);
-        var secondArgument = calculatorExpressionCopy.substring(operationIndex + 1, calculatorExpressionCopy.length);
-
-        //TODO Function for calculation of the two arguments!
-        var currentSum = Number(firstArgument) + Number(secondArgument);
-
-        calculatorExpressionCopy = calculatorExpressionCopy.substring(partOfExpressionLength, calculatorExpressionCopy.length);
-        counter++;
-        */
-        
-      }
     }
 
     this.setCalculationResult(currentSum.toString());
@@ -146,6 +107,117 @@ export class CalculatorComponent {
           return 0;
     }
 
+  }
+
+  public calculateAndReplaceAddition(expression: string): { expression: string, currentSum: number } {
+    var currentSum = 0;
+    while(true){
+      //var expressionMatch = expression.match(/\d+[\+]\d+/);
+      //[\(]?[\-]?\d+[\)]?[\*]{1}[\(]?[\-]?\d+[\)]?
+      var expressionMatch = expression.match(/[\(]?[\-]?\d+[\)]?[\*]{1}[\(]?[\-]?\d+[\)]?/);
+
+      if(expressionMatch == null){
+        break;
+      }
+
+      var expressionMatchValue = expressionMatch[0];
+      var operationIndexOfMatch = expressionMatchValue.indexOf("+");
+      var lengthOfMatch = expressionMatchValue.length;
+      var firstOperator = expressionMatchValue.substring(0,operationIndexOfMatch);
+      if(firstOperator.indexOf("(") != -1){
+        firstOperator = firstOperator.substring(1, firstOperator.length - 1);
+      }
+
+      var secondOperator = expressionMatchValue.substring(operationIndexOfMatch + 1,lengthOfMatch);
+      if(secondOperator.indexOf("(") != -1){
+        secondOperator = secondOperator.substring(1, secondOperator.length - 1);
+      }
+
+      currentSum = Number(firstOperator) + Number(secondOperator);
+
+      var sumValueToSet = currentSum.toString();
+      if(Math.sign(currentSum) == -1){
+        sumValueToSet += "(" + sumValueToSet + ")";
+      }
+
+      expression = expression.replace(expressionMatchValue, currentSum.toString());
+    }
+
+    console.log("Addition: " + currentSum);
+    return { expression, currentSum };
+  }
+
+  
+
+  public calculateAndReplaceSubtraction(expression: string): { expression: string, currentSum: number } {
+    var currentSum = 0;
+    while(true){
+      var expressionMatch = expression.match(/[\(]?[\-]?\d+[\)]?[\-]{1}[\(]?[\-]?\d+[\)]?/);
+
+      if(expressionMatch == null){
+        break;
+      }
+
+      var expressionMatchValue = expressionMatch[0];
+      var operationIndexOfMatch = expressionMatchValue.indexOf("-");
+      var lengthOfMatch = expressionMatchValue.length;
+      var firstOperator = expressionMatchValue.substring(0,operationIndexOfMatch);
+      var secondOperator = expressionMatchValue.substring(operationIndexOfMatch + 1,lengthOfMatch);
+      
+      currentSum = Number(firstOperator) - Number(secondOperator);
+
+      expression = expression.replace(expressionMatchValue, currentSum.toString());
+    }
+
+    console.log("Substraction: " + currentSum);
+    return { expression, currentSum };
+  }
+
+  public calculateAndReplaceMultiplication(expression: string): { expression: string, currentSum: number } {
+    var currentSum = 0;
+    while(true){
+      var expressionMatch = expression.match(/[\(]?[\-]?\d+[\)]?[\*]{1}[\(]?[\-]?\d+[\)]?/);
+
+      if(expressionMatch == null){
+        break;
+      }
+
+      var expressionMatchValue = expressionMatch[0];
+      var operationIndexOfMatch = expressionMatchValue.indexOf("*");
+      var lengthOfMatch = expressionMatchValue.length;
+      var firstOperator = expressionMatchValue.substring(0,operationIndexOfMatch);
+      var secondOperator = expressionMatchValue.substring(operationIndexOfMatch + 1,lengthOfMatch);
+      
+      currentSum = Number(firstOperator) * Number(secondOperator);
+
+      expression = expression.replace(expressionMatchValue, currentSum.toString());
+    }
+
+    console.log("Multiplication: " + currentSum);
+    return { expression, currentSum };
+  }
+
+  public calculateAndReplaceDivision(expression: string): { expression: string, currentSum: number } {
+    var currentSum = 0;
+    while(true){
+      var expressionMatch = expression.match(/[\(]?[\-]?\d+[\)]?[\/]{1}[\(]?[\-]?\d+[\)]?/);
+
+      if(expressionMatch == null){
+        break;
+      }
+
+      var expressionMatchValue = expressionMatch[0];
+      var operationIndexOfMatch = expressionMatchValue.indexOf("/");
+      var lengthOfMatch = expressionMatchValue.length;
+      var firstOperator = expressionMatchValue.substring(0,operationIndexOfMatch);
+      var secondOperator = expressionMatchValue.substring(operationIndexOfMatch + 1,lengthOfMatch);
+      
+      currentSum = Number(firstOperator) / Number(secondOperator);
+
+      expression = expression.replace(expressionMatchValue, currentSum.toString());
+    }
+    console.log("Division: " + currentSum);
+    return { expression, currentSum };
   }
 
   public findOperationIndex(expression: string) {
